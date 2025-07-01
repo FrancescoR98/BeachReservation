@@ -44,6 +44,12 @@ const hotspotContainer = document.getElementById("hotspots");
   function caricaElementi(data) {
     hotspotContainer.innerHTML = "";
 
+    // reset default state before applying data for the new date
+    elementi.forEach(el => {
+      el.stato = "libero";
+      el.nome = "";
+    });
+
     fetch(`dati/${data}.json`, { cache: "no-store" })
     .then(res => {
       if (!res.ok) throw new Error("File non trovato");
@@ -59,10 +65,7 @@ const hotspotContainer = document.getElementById("hotspots");
       });
     })
     .catch(() => {
-      elementi.forEach(el => {
-        el.stato = "libero";
-        el.nome = "";
-      });
+      console.error(`File dati/${data}.json non trovato`);
     })
     .finally(() => {
       elementi.forEach(el => {
