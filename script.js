@@ -1,5 +1,5 @@
-// Imposta automaticamente la data di oggi nel campo #datePicker
-const currentDate = new Date().toISOString().split('T')[0];
+// Data odierna formattata per l'input di tipo date
+const currentDate = new Date().toISOString().split("T")[0];
 
 let currentEl = null;
 
@@ -41,10 +41,16 @@ const elementi = [
 const hotspotContainer = document.getElementById("hotspots");
 
 // Popola gli elementi sulla mappa
-function caricaElementi(data) {
-  hotspotContainer.innerHTML = "";
+  function caricaElementi(data) {
+    hotspotContainer.innerHTML = "";
 
-  fetch(`dati/${data}.json`)
+    // reset default state before applying data for the new date
+    elementi.forEach(el => {
+      el.stato = "libero";
+      el.nome = "";
+    });
+
+    fetch(`dati/${data}.json`, { cache: "no-store" })
     .then(res => {
       if (!res.ok) throw new Error("File non trovato");
       return res.json();
@@ -59,10 +65,7 @@ function caricaElementi(data) {
       });
     })
     .catch(() => {
-      elementi.forEach(el => {
-        el.stato = "libero";
-        el.nome = "";
-      });
+      console.error(`File dati/${data}.json non trovato`);
     })
     .finally(() => {
       elementi.forEach(el => {
@@ -103,7 +106,7 @@ function caricaElementi(data) {
         nome.className = "nome";
         nome.textContent = el.nome || "";
         nome.style.position = "absolute";
-        nome.style.bottom = "90";
+        nome.style.top = "45px";
         nome.style.left = "0";
         nome.style.width = "100%";
         nome.style.textAlign = "center";
@@ -157,18 +160,20 @@ function salvaPrenotazione(dataInizio, dataFine) {
     });
   }
 
-  Object.entries(aggiornamenti).forEach(([data, aggiornamenti]) => {
+  const richieste = Object.entries(aggiornamenti).map(([data, aggiornamenti]) =>
     fetch(`/dati/${data}.json`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(aggiornamenti)
     })
     .then(r => r.ok ? console.log(`Salvato ${data}`) : console.error(`Errore salvataggio ${data}`))
-    .catch(err => console.error(`Errore rete salvataggio ${data}`, err));
-  });
+    .catch(err => console.error(`Errore rete salvataggio ${data}`, err))
+  );
 
-  document.getElementById("popup").style.display = "none";
-  caricaElementi(document.getElementById("datePicker").value);
+  Promise.all(richieste).finally(() => {
+    document.getElementById("popup").style.display = "none";
+    caricaElementi(document.getElementById("datePicker").value);
+  });
 }
 
 // Listener per salvataggio
@@ -184,14 +189,16 @@ document.getElementById("popup-close").onclick = () => {
 };
 
 // Cambio data
-document.getElementById("datePicker").addEventListener("change", function () {
-  caricaElementi(this.value);
-});
+  document.getElementById("datePicker").addEventListener("change", function () {
+    localStorage.setItem("selectedDate", this.value);
+    caricaElementi(this.value);
+  });
 
 // Inizializzazione
-window.onload = () => {
-  const oggi = new Date().toISOString().split("T")[0];
-  document.getElementById("datePicker").value = oggi;
-  caricaElementi(oggi);
-};
+  window.onload = () => {
+    const saved = localStorage.getItem("selectedDate");
+    const initDate = saved || currentDate;
+    document.getElementById("datePicker").value = initDate;
+    caricaElementi(initDate);
+  };
 
