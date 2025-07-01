@@ -41,10 +41,10 @@ const elementi = [
 const hotspotContainer = document.getElementById("hotspots");
 
 // Popola gli elementi sulla mappa
-function caricaElementi(data) {
-  hotspotContainer.innerHTML = "";
+  function caricaElementi(data) {
+    hotspotContainer.innerHTML = "";
 
-  fetch(`dati/${data}.json`)
+    fetch(`dati/${data}.json`, { cache: "no-store" })
     .then(res => {
       if (!res.ok) throw new Error("File non trovato");
       return res.json();
@@ -157,18 +157,20 @@ function salvaPrenotazione(dataInizio, dataFine) {
     });
   }
 
-  Object.entries(aggiornamenti).forEach(([data, aggiornamenti]) => {
+  const richieste = Object.entries(aggiornamenti).map(([data, aggiornamenti]) =>
     fetch(`/dati/${data}.json`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(aggiornamenti)
     })
     .then(r => r.ok ? console.log(`Salvato ${data}`) : console.error(`Errore salvataggio ${data}`))
-    .catch(err => console.error(`Errore rete salvataggio ${data}`, err));
-  });
+    .catch(err => console.error(`Errore rete salvataggio ${data}`, err))
+  );
 
-  document.getElementById("popup").style.display = "none";
-  caricaElementi(document.getElementById("datePicker").value);
+  Promise.all(richieste).finally(() => {
+    document.getElementById("popup").style.display = "none";
+    caricaElementi(document.getElementById("datePicker").value);
+  });
 }
 
 // Listener per salvataggio
@@ -184,13 +186,16 @@ document.getElementById("popup-close").onclick = () => {
 };
 
 // Cambio data
-document.getElementById("datePicker").addEventListener("change", function () {
-  caricaElementi(this.value);
-});
+  document.getElementById("datePicker").addEventListener("change", function () {
+    localStorage.setItem("selectedDate", this.value);
+    caricaElementi(this.value);
+  });
 
 // Inizializzazione
-window.onload = () => {
-  document.getElementById("datePicker").value = currentDate;
-  caricaElementi(currentDate);
-};
+  window.onload = () => {
+    const saved = localStorage.getItem("selectedDate");
+    const initDate = saved || currentDate;
+    document.getElementById("datePicker").value = initDate;
+    caricaElementi(initDate);
+  };
 
