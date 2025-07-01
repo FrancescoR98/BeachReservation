@@ -1,5 +1,5 @@
-// Imposta automaticamente la data di oggi nel campo #datePicker
-const currentDate = new Date().toISOString().split('T')[0];
+// Data odierna formattata per l'input di tipo date
+const currentDate = new Date().toISOString().split("T")[0];
 
 let currentEl = null;
 
@@ -103,7 +103,7 @@ function caricaElementi(data) {
         nome.className = "nome";
         nome.textContent = el.nome || "";
         nome.style.position = "absolute";
-        nome.style.bottom = "90";
+        nome.style.top = "45px";
         nome.style.left = "0";
         nome.style.width = "100%";
         nome.style.textAlign = "center";
@@ -190,8 +190,7 @@ document.getElementById("datePicker").addEventListener("change", function () {
 
 // Inizializzazione
 window.onload = () => {
-  const oggi = new Date().toISOString().split("T")[0];
-  document.getElementById("datePicker").value = oggi;
-  caricaElementi(oggi);
+  document.getElementById("datePicker").value = currentDate;
+  caricaElementi(currentDate);
 };
 
